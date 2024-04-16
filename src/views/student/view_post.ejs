@@ -121,14 +121,37 @@
                     <a href="/student/edit_post/<%= post.article_id %>" class="btn btn-primary">Edit</a>
                     <a download href="http://localhost:3000/uploads/<%= post.article_file %>" class="btn btn-primary">Download</a>
                 </div>
-
+                <!-- Table to display comments -->
+                <div class="mt-3">
+                    <h3>Comments:</h3>
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Author</th>
+                            <th>Content</th>
+                            <th>Time</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <% post.comments.forEach((comment) => { %>
+                            <tr>
+                                <td><%= comment.manager_name %></td>
+                                <td><%= comment.content %></td>
+                                <td><%= comment.time_created %></td>
+                            </tr>
+                        <% }); %>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     <% }); %>
-
-
-
 </div>
+
+
+
+
+
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.10.2/umd/popper.min.js"></script>

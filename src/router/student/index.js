@@ -29,18 +29,46 @@ const pool = mysql.createPool(dbConfig);
 
 router.use(checkLoggedIn)
 
-router.get("/student_page", async (req, res) => {try {
+// router.get("/student_page", async (req, res) => {try {
+//         const connection = await pool.getConnection();
+//         const student_id = req.cookies.uid;
+//         const [studentInfo] = await connection.query(
+//             "SELECT student_name, faculty.department_name FROM student INNER JOIN faculty ON student.student_department_id = faculty.department_id WHERE student_id = ?",
+//             [student_id]
+//         );
+//         connection.release();
+//         const studentName = studentInfo[0].student_name;
+//         const facultyName = studentInfo[0].department_name;
+//         res.render("student/student_page", { title: "Student", studentName, facultyName });
+//     } catch (error) {console.error("Database query error:", error);res.status(500).json({ err: "Database query error" });}});
+router.get("/view_post", async (req, res) => {
+    try {
         const connection = await pool.getConnection();
         const student_id = req.cookies.uid;
-        const [studentInfo] = await connection.query(
-            "SELECT student_name, faculty.department_name FROM student INNER JOIN faculty ON student.student_department_id = faculty.department_id WHERE student_id = ?",
+        const [rows] = await connection.query(
+            "SELECT * FROM post WHERE article_author_id = ?",
             [student_id]
         );
+
+        // Truy vấn các comment cho các bài post thuộc department
+        const commentsPromises = rows.map(async (post) => {
+            const [comments] = await connection.query(
+                "SELECT * FROM comment INNER JOIN departmentmanager ON departmentmanager.department_manager_id = comment.author_id WHERE comment.article_id = ?",
+                [post.article_id]
+            );
+            post.comments = comments;
+            return post;
+        });
+
+        const posts = await Promise.all(commentsPromises);
+
         connection.release();
-        const studentName = studentInfo[0].student_name;
-        const facultyName = studentInfo[0].department_name;
-        res.render("student/student_page", { title: "Student", studentName, facultyName });
-    } catch (error) {console.error("Database query error:", error);res.status(500).json({ err: "Database query error" });}});
+        res.render("student/view_post", { title: "Post", posts });
+    } catch (error) {
+        console.error("Database query error:", error);
+        res.status(500).json({ err: "Database query error" });
+    }
+});
 
 
 //view post

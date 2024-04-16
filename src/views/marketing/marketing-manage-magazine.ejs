@@ -274,11 +274,13 @@
         const magazineNames = document.querySelectorAll(".magazine-name");
         magazineNames.forEach(function(name) {
             name.addEventListener("click", function() {
-                const magazineName = name.textContent;
-                window.location.href = "/marketing/marketing-manage-magazine-post?magazineName=" + magazineName;
+                const magazineId = name.dataset.magazineId;
+                window.location.href = "/marketing/marketing-manage-magazine-post/" + magazineId;
             });
         });
     });
+
+
 </script>
 </body>
 

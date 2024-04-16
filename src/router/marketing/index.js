@@ -144,69 +144,19 @@ router.get('/downloadPostAsZip/:articleId', async (req, res) => {
 
 
 //manage magazine post
-// router.get("/marketing-manage-magazine-post", async (req, res) => {
-//     const magazineName = req.query.magazineName;
-//
-//     try {
-//         const connection = await pool.getConnection();
-//         const [magazine] = await connection.query(
-//             "SELECT * FROM magazine WHERE magazine_name = ?",
-//             [magazineName]
-//         );
-//         const [posts] = await connection.query(
-//             "SELECT p.*, s.student_name AS author FROM post p JOIN student s ON p.article_author_id = s.student_id WHERE p.magazine_id = ?",
-//             [magazine[0].magazine_id]
-//         );
-//         connection.release();
-//
-//         res.render("marketing/marketing-manage-magazine-post", { title: `Manage Posts - ${magazineName}`, magazine: magazine[0], posts });
-//     } catch (error) {
-//         console.error("Error displaying magazine posts:", error);
-//         res.status(500).send("Error displaying magazine posts. Please try again later.");
-//     }
-// });
-
-
-router.get("/marketing-manage-magazine-post", async (req, res) => {
-    const magazineName = req.query.magazineName;
-
+router.get("/marketing-manage-magazine-post/:magazineId", async (req, res) => {
     try {
+        const magazineId = req.params.magazineId;
         const connection = await pool.getConnection();
-        const [magazine] = await connection.query(
-            "SELECT * FROM magazine WHERE magazine_name = ?",
-            [magazineName]
-        );
-
-        // Get academic year start date and end date
-        const [academicYear] = await connection.query(
-            "SELECT start_date, end_date FROM academic_years WHERE start_date <= CURDATE() AND end_date >= CURDATE()"
+        const [posts] = await connection.query(
+            "SELECT post.*, student.student_name AS author_name FROM post JOIN student ON post.article_author_id = student.student_id WHERE post.magazine_id = ?",
+            [magazineId]
         );
         connection.release();
-
-        // Check if magazine dates fall within academic year dates
-        const magazineStartDate = new Date(magazine[0].start_date);
-        const magazineEndDate = new Date(magazine[0].end_date);
-        const academicYearStartDate = new Date(academicYear[0].start_date);
-        const academicYearEndDate = new Date(academicYear[0].end_date);
-
-        if (
-            magazineStartDate >= academicYearStartDate &&
-            magazineEndDate <= academicYearEndDate
-        ) {
-            // Render the page allowing edit and delete
-            const [posts] = await connection.query(
-                "SELECT p.*, s.student_name AS author FROM post p JOIN student s ON p.article_author_id = s.student_id WHERE p.magazine_id = ?",
-                [magazine[0].magazine_id]
-            );
-
-            res.render("marketing/marketing-manage-magazine-post", { title: `Manage Posts - ${magazineName}`, magazine: magazine[0], posts });
-        } else {
-            // Render the page without edit and delete options
-            res.render("marketing/marketing-view-magazine-post", { title: `View Posts - ${magazineName}`, magazine: magazine[0] });
-        }
+        res.render("marketing/marketing-manage-magazine-post", { title: "Manage Magazine Post", posts: posts });
     } catch (error) {
-        console.error("Error displaying magazine posts:", error);
-        res.status(500).send("Error displaying magazine posts. Please try again later.");
+        console.error("Error fetching posts:", error);
+        res.status(500).send("Error fetching posts. Please try again later.");
     }
 });
 

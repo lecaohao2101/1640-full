@@ -431,9 +431,7 @@ router.get("/departmentData", async (req, res) => {
         connection.release();
     }
 });
-router.get("/dashboard/analysis", async (req, res) => {
-    res.render("admin/dashboard/admin-analysis");
-});
+router.get("/dashboard/analysis", async (req, res) => {res.render("admin/dashboard/admin-analysis");});
 
 //______________________________________________________________________________________________________________________/
 
@@ -457,44 +455,46 @@ router.get("/post/admin-manage-post", async (req, res) => {
 //download posts
 router.get('/downloadPostsZip', async (req, res) => {
     try {
-        const zipFileName = 'posts.zip';
-        const output = fs.createWriteStream(zipFileName);
-        const archive = archiver('zip');
-        archive.pipe(output);
-
         const connection = await pool.getConnection();
-        const [posts] = await connection.query(
-            "SELECT * FROM post INNER JOIN student ON post.article_author_id = student.student_id",
-        );
+        const [posts] = await connection.query("SELECT * FROM post");
+        connection.release();
 
-        for (const post of posts) {
-            const folderName = `${post.article_title}-${post.student_name.replace(/ /g, '_')}`;
-            const folderPath = path.join(__dirname, folderName);
-            const attachmentPath = path.join(__dirname, '..', 'uploads', post.article_file);
-
-            if (!fs.existsSync(folderPath)) {
-                fs.mkdirSync(folderPath);
-            }
-
-            fs.copyFileSync(attachmentPath, path.join(folderPath, post.article_file));
-
-            archive.directory(folderPath, folderName);
+        if (!posts.length) {
+            return res.status(404).json({ error: 'No posts found' });
         }
 
-        archive.finalize();
+        const output = fs.createWriteStream(path.join(__dirname, 'posts.zip'));
+        const archive = archiver('zip', {
+            zlib: { level: 9 }
+        });
+
+        archive.pipe(output);
+
+        posts.forEach(post => {
+            archive.file(path.join(__dirname, 'uploads', post.article_file), { name: post.article_file });
+        });
 
         output.on('close', () => {
-            res.download(zipFileName, zipFileName, (err) => {
-                if (!err) {
-                    fs.unlinkSync(zipFileName);
+            res.download(path.join(__dirname, 'posts.zip'), 'all_posts.zip', (err) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json({ error: 'Server error' });
                 }
             });
         });
+
+        archive.on('error', (err) => {
+            console.error(err);
+            return res.status(500).json({ error: 'Server error' });
+        });
+
+        archive.finalize();
     } catch (err) {
-        console.error('Error creating zip file:', err);
-        res.status(500).send('Internal Server Error');
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
     }
 });
+
 router.get('/downloadPostAsZip/:articleId', async (req, res) => {
     try {
         const articleId = req.params.articleId;
