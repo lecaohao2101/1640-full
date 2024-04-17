@@ -29,18 +29,18 @@ const pool = mysql.createPool(dbConfig);
 
 router.use(checkLoggedIn)
 
-// router.get("/student_page", async (req, res) => {try {
-//         const connection = await pool.getConnection();
-//         const student_id = req.cookies.uid;
-//         const [studentInfo] = await connection.query(
-//             "SELECT student_name, faculty.department_name FROM student INNER JOIN faculty ON student.student_department_id = faculty.department_id WHERE student_id = ?",
-//             [student_id]
-//         );
-//         connection.release();
-//         const studentName = studentInfo[0].student_name;
-//         const facultyName = studentInfo[0].department_name;
-//         res.render("student/student_page", { title: "Student", studentName, facultyName });
-//     } catch (error) {console.error("Database query error:", error);res.status(500).json({ err: "Database query error" });}});
+router.get("/student_page", async (req, res) => {try {
+        const connection = await pool.getConnection();
+        const student_id = req.cookies.uid;
+        const [studentInfo] = await connection.query(
+            "SELECT student_name, faculty.department_name FROM student INNER JOIN faculty ON student.student_department_id = faculty.department_id WHERE student_id = ?",
+            [student_id]
+        );
+        connection.release();
+        const studentName = studentInfo[0].student_name;
+        const facultyName = studentInfo[0].department_name;
+        res.render("student/student_page", { title: "Student", studentName, facultyName });
+    } catch (error) {console.error("Database query error:", error);res.status(500).json({ err: "Database query error" });}});
 router.get("/view_post", async (req, res) => {
     try {
         const connection = await pool.getConnection();
