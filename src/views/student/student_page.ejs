@@ -72,6 +72,28 @@
             margin-top: 200px;
             animation: slideIn 0.5s ease-in-out forwards;
         }
+        @media screen and (max-width: 600px) {
+            .topnav {
+                flex-direction: column;
+            }
+
+            .topnav a {
+                padding: 10px;
+            }
+            .topnav .nav{
+                display: grid;
+                grid-template-columns: auto auto auto auto;
+                margin-top: 10px;
+            }
+            .logo img {
+                height: 30px;
+                margin-right: 0;
+            }
+
+            .table th, .table td {
+                padding: 8px;
+            }
+        }   
 
     </style>
 </head>
