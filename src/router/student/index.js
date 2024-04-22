@@ -50,7 +50,6 @@ router.get("/view_post", async (req, res) => {
             [student_id]
         );
 
-        // Truy vấn các comment cho các bài post thuộc department
         const commentsPromises = rows.map(async (post) => {
             const [comments] = await connection.query(
                 "SELECT * FROM comment INNER JOIN departmentmanager ON departmentmanager.department_manager_id = comment.author_id WHERE comment.article_id = ?",
@@ -72,17 +71,49 @@ router.get("/view_post", async (req, res) => {
 
 
 //view post
+// router.get("/view_post", async (req, res) => {
+//     const connection = await pool.getConnection();
+//     const student_id = req.cookies.uid;
+//     const [rows] = await connection.query(
+//         "SELECT * FROM post WHERE article_author_id = ?",
+//         [student_id]
+//     );
+//     console.log(rows);
+//     connection.release();
+//     res.render("student/view_post", { title: "Post", posts: rows });
+// });
+
+// Inside the view_post route handler
 router.get("/view_post", async (req, res) => {
-    const connection = await pool.getConnection();
-    const student_id = req.cookies.uid;
-    const [rows] = await connection.query(
-        "SELECT * FROM post WHERE article_author_id = ?",
-        [student_id]
-    );
-    console.log(rows);
-    connection.release();
-    res.render("student/view_post", { title: "Post", posts: rows });
+    try {
+        const connection = await pool.getConnection();
+        const student_id = req.cookies.uid;
+        const [rows] = await connection.query(
+            "SELECT * FROM post WHERE article_author_id = ?",
+            [student_id]
+        );
+
+        const commentsPromises = rows.map(async (post) => {
+            const [comments] = await connection.query(
+                "SELECT * FROM comment INNER JOIN departmentmanager ON departmentmanager.department_manager_id = comment.author_id WHERE comment.article_id = ?",
+                [post.article_id]
+            );
+            post.comments = comments;
+            return post;
+        });
+
+        const posts = await Promise.all(commentsPromises);
+
+        connection.release();
+
+        // Render view_post template with posts data
+        res.render("student/view_post", { title: "Post", posts });
+    } catch (error) {
+        console.error("Database query error:", error);
+        res.status(500).json({ err: "Database query error" });
+    }
 });
+
 
 
 //create post
